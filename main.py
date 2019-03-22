@@ -119,7 +119,7 @@ for i, (train_idx, valid_idx) in enumerate(splits):
 
     num_round = 100000
     clf = lgb.train(lgbm_param, train_data, num_round, valid_sets=[valid_data],\
-                    verbose_eval=100, early_stopping_rounds=1000)
+                    verbose_eval=100, early_stopping_rounds=3000)
 
     models.append(clf)
 
@@ -128,7 +128,7 @@ for i, (train_idx, valid_idx) in enumerate(splits):
 
     clf.save_model(os.path.join(save_path, f'lgbm_{i+1}.txt'), num_iteration=clf.best_iteration)
 
-    oof[valid_idx] = clf.predict(x_train[valid_idx], num_iteration=clf.best_iteration)
+    oof[valid_idx] = clf.predict(x_valid, num_iteration=clf.best_iteration)
 
     fold_importance_df = pd.DataFrame()
     fold_importance_df['feature'] = features
