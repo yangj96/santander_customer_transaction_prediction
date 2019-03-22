@@ -108,10 +108,10 @@ for i, (train_idx, valid_idx) in enumerate(splits):
     logger.info(f'Fold {i+1}')
     # x_train = np.array(train_features)
     # y_train = np.array(train_target)
-    x_train, y_train = train_features.iloc[train_idx], train_target.iloc[train_idx]
-    x_valid, y_valid = train_features.iloc[valid_idx], train_target.iloc[valid_idx]
+    x_train, y_train = train_features[train_idx], train_target[train_idx]
+    x_valid, y_valid = train_features[valid_idx], train_target[valid_idx]
     
-    x_tr, y_tr = augment(x_train.values, y_train.values)
+    x_tr, y_tr = augment(x_train, y_train)
     x_tr = pd.DataFrame(x_tr)
 
     train_data = lgb.Dataset(x_tr, label=y_tr)
