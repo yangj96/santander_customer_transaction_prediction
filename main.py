@@ -10,6 +10,33 @@ import shutil
 from datetime import datetime
 from Logger import Logger
 
+def augment(x,y,t=2):
+    xs,xn = [],[]
+    for i in range(t):
+        mask = y>0
+        x1 = x[mask].copy()
+        ids = np.arange(x1.shape[0])
+        for c in range(x1.shape[1]):
+            np.random.shuffle(ids)
+            x1[:,c] = x1[ids][:,c]
+        xs.append(x1)
+
+    for i in range(t//2):
+        mask = y==0
+        x1 = x[mask].copy()
+        ids = np.arange(x1.shape[0])
+        for c in range(x1.shape[1]):
+            np.random.shuffle(ids)
+            x1[:,c] = x1[ids][:,c]
+        xn.append(x1)
+
+    xs = np.vstack(xs)
+    xn = np.vstack(xn)
+    ys = np.ones(xs.shape[0])
+    yn = np.zeros(xn.shape[0])
+    x = np.vstack([x,xs,xn])
+    y = np.concatenate([y,ys,yn])
+    return x,y
 
 save_path = '../santander_customer_transaction_prediction_save'
 if not os.path.exists(save_path):
@@ -79,10 +106,16 @@ models = []
 
 for i, (train_idx, valid_idx) in enumerate(splits):
     logger.info(f'Fold {i+1}')
-    x_train = np.array(train_features)
-    y_train = np.array(train_target)
-    train_data = lgb.Dataset(x_train[train_idx.astype(int)], label=y_train[train_idx.astype(int)])
-    valid_data = lgb.Dataset(x_train[valid_idx.astype(int)], label=y_train[valid_idx.astype(int)])
+    # x_train = np.array(train_features)
+    # y_train = np.array(train_target)
+    x_train, y_train = train_features.iloc[train_idx], train_target.iloc[train_idx]
+    x_valid, y_valid = train_features.iloc[valid_idx], train_target.iloc[valid_idx]
+    
+    x_tr, y_tr = augment(x_train.values, y_train.values)
+    x_tr = pd.DataFrame(x_tr)
+
+    train_data = lgb.Dataset(x_tr, label=y_tr)
+    valid_data = lgb.Dataset(x_valid, label=y_valid)
 
     num_round = 100000
     clf = lgb.train(lgbm_param, train_data, num_round, valid_sets=[valid_data],\
