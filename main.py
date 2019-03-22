@@ -80,7 +80,7 @@ lgbm_param = {
         'min_data_in_leaf': 5,
         'learning_rate': 0.01,
         'min_sum_hessian_in_leaf': 10.0,
-        'bagging_fraction': 0.8,
+        'bagging_fraction': 0.4,
         'bagging_freq': 5,
         'feature_fraction': 0.05,
         'lambda_l1': 0.2,
@@ -119,7 +119,7 @@ for i, (train_idx, valid_idx) in enumerate(splits):
 
     num_round = 100000
     clf = lgb.train(lgbm_param, train_data, num_round, valid_sets=[valid_data],\
-                    verbose_eval=100, early_stopping_rounds=3000)
+                    verbose_eval=100, early_stopping_rounds=1000)
 
     models.append(clf)
 
