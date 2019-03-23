@@ -104,7 +104,7 @@ lgbm_param = {
     #"lambda_l2" : 5,
     "bagging_seed" : random_state,
     "verbosity" : 1,
-    "seed": random_state
+    "seed": random_state,
     "num_threads" : 32
 }
 
