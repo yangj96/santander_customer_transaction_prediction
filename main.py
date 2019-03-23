@@ -57,13 +57,25 @@ train_features = train_df.drop(['target', 'ID_code'], axis=1)
 test_features = test_df.drop(['ID_code'], axis=1)
 train_target = train_df['target']
 
+for col in train_features.columns:
+    train_features[col + '_err'] = train_features[col] - train_features[col].mean()
+    train_features[col + '_abserr'] = abs(train_features[col] - train_features[col].mean())
+print(train_features.shape)
+
+for col in test_features.columns:
+    test_features[col + '_err'] = test_features[col] - test_features[col].mean()
+    test_features[col + '_abserr'] = abs(test_features[col] - test_features[col].mean())
+
+features = train_features.columns
+
 scaler = StandardScaler().fit(train_features)
 train_features = scaler.transform(train_features)
 test_features = scaler.transform(test_features)
 
-n_splits = 5 # Number of K-folder Splits
-
-splits = list(StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=1).split(train_features, train_target))
+n_splits = 11 # Number of K-folder Splits
+random_state = 42
+np.random.seed(random_state)
+splits = list(StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state).split(train_features, train_target))
 #
 # lgbm_param = {
 #     'num_leaves': 7,
@@ -75,32 +87,29 @@ splits = list(StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=1).s
 #     'metric': 'auc'
 # }
 lgbm_param = {
-        'num_leaves': 13,
-        'max_bin': 63,
-        'min_data_in_leaf': 5,
-        'learning_rate': 0.01,
-        'min_sum_hessian_in_leaf': 10.0,
-        'bagging_fraction': 0.8,
-        'bagging_freq': 5,
-        'feature_fraction': 0.05,
-        'lambda_l1': 0.2,
-        'lambda_l2': 4,
-        'min_gain_to_split': 0.,
-        'max_depth': -1,
-        'save_binary': True,
-        'objective': 'binary',
-        'boosting_type': 'gbdt',
-        'verbose': 1,
-        'metric': 'auc',
-        'is_unbalance': True,
-        'min_data_in_leaf': 80,
-        'num_threads': 32
-    }
+    "objective" : "binary",
+    "metric" : "auc",
+    "boosting": 'gbdt',
+    "max_depth" : -1,
+    "num_leaves" : 13,
+    "learning_rate" : 0.01,
+    "bagging_freq": 5,
+    "bagging_fraction" : 0.4,
+    "feature_fraction" : 0.05,
+    "min_data_in_leaf": 80,
+    "min_sum_heassian_in_leaf": 10,
+    "tree_learner": "serial",
+    "boost_from_average": "false",
+    #"lambda_l1" : 5,
+    #"lambda_l2" : 5,
+    "bagging_seed" : random_state,
+    "verbosity" : 1,
+    "seed": random_state
+}
 
 oof = np.zeros(len(train_df))
 predictions = np.zeros(len(test_df))
 feature_importance_df = pd.DataFrame()
-features = [c for c in train_df.columns if c not in ['ID_code', 'target']]
 
 models = []
 
@@ -110,8 +119,9 @@ for i, (train_idx, valid_idx) in enumerate(splits):
     # y_train = np.array(train_target)
     x_train, y_train = train_features[train_idx], train_target[train_idx]
     x_valid, y_valid = train_features[valid_idx], train_target[valid_idx]
-    
+    print(x_train.shape)
     x_tr, y_tr = augment(x_train, y_train)
+    print(x_tr.shape)
     x_tr = pd.DataFrame(x_tr)
 
     train_data = lgb.Dataset(x_tr, label=y_tr)
@@ -119,7 +129,7 @@ for i, (train_idx, valid_idx) in enumerate(splits):
 
     num_round = 100000
     clf = lgb.train(lgbm_param, train_data, num_round, valid_sets=[valid_data],\
-                    verbose_eval=100, early_stopping_rounds=3000)
+                    verbose_eval=100, early_stopping_rounds=1000)
 
     models.append(clf)
 
