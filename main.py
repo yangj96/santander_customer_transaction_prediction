@@ -97,7 +97,7 @@ lgbm_param = {
     "bagging_fraction" : 0.4,
     "feature_fraction" : 0.05,
     "min_data_in_leaf": 80,
-    "min_sum_heassian_in_leaf": 10,
+    "min_sum_hessian_in_leaf": 10,
     "tree_learner": "serial",
     "boost_from_average": "false",
     #"lambda_l1" : 5,
@@ -105,6 +105,7 @@ lgbm_param = {
     "bagging_seed" : random_state,
     "verbosity" : 1,
     "seed": random_state
+    "num_threads" : 32
 }
 
 oof = np.zeros(len(train_df))
